@@ -7,6 +7,7 @@ import com.elasnatech.app.data.db.AppDatabase
 import com.elasnatech.app.data.repository.AppRepository
 import com.elasnatech.app.data.repository.RoomAppRepository
 import com.elasnatech.app.data.repository.ResultadoQuizModel
+import com.elasnatech.app.data.repository.QuizResult
 import com.elasnatech.app.QuizQuestion
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
@@ -17,7 +18,6 @@ import java.util.Locale
 
 class QuizViewModel(application: Application, private val repository: AppRepository) : AndroidViewModel(application) {
 
-    // Construtor secundário padrão
     constructor(application: Application) : this(
         application,
         RoomAppRepository(
@@ -43,6 +43,13 @@ class QuizViewModel(application: Application, private val repository: AppReposit
             val dataHoje = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
             val resultado = repository.salvarResultadoQuiz(quizId, acertos, totalPerguntas, dataHoje)
             onResultadoPronto(resultado)
+        }
+    }
+
+    fun obterMelhorResultado(quizId: Int, onResult: (QuizResult?) -> Unit) {
+        viewModelScope.launch {
+            val melhor = repository.obterMelhorResultadoQuiz(quizId)
+            onResult(melhor)
         }
     }
 }
