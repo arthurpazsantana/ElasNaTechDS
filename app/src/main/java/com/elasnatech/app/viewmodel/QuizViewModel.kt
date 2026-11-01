@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.elasnatech.app.data.db.AppDatabase
 import com.elasnatech.app.data.repository.AppRepository
+import com.elasnatech.app.data.repository.RoomAppRepository
 import com.elasnatech.app.data.repository.ResultadoQuizModel
 import com.elasnatech.app.QuizQuestion
 import kotlinx.coroutines.flow.SharingStarted
@@ -18,13 +19,12 @@ import java.util.Locale
 class QuizViewModel(application: Application) : AndroidViewModel(application) {
 
     private val db = AppDatabase.getInstance(application)
-    private val repository = AppRepository(
+    private val repository: AppRepository = RoomAppRepository(
         db.userProfileDao(),
         db.quizResultDao(),
         db.badgeDao()
     )
 
-    // Exemplo para observar o histórico de quizzes na tela se necessário
     val historicoQuizzes = repository.observarHistoricoQuizzes()
         .stateIn(
             scope = viewModelScope,
@@ -36,7 +36,6 @@ class QuizViewModel(application: Application) : AndroidViewModel(application) {
         return repository.obterPerguntasQuiz()
     }
 
-    // Chamado quando o utilizador termina o quiz
     fun finalizarQuiz(quizId: Int, acertos: Int, totalPerguntas: Int, onResultadoPronto: (ResultadoQuizModel) -> Unit) {
         viewModelScope.launch {
             val dataHoje = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())

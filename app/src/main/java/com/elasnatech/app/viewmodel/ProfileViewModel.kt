@@ -5,7 +5,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.elasnatech.app.data.db.AppDatabase
 import com.elasnatech.app.data.repository.AppRepository
-import com.elasnatech.app.data.db.UserProfileEntity
+import com.elasnatech.app.data.repository.RoomAppRepository
+import com.elasnatech.app.data.repository.UserProfile
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -14,14 +15,13 @@ import kotlinx.coroutines.launch
 class ProfileViewModel(application: Application) : AndroidViewModel(application) {
 
     private val db = AppDatabase.getInstance(application)
-    private val repository = AppRepository(
+    private val repository: AppRepository = RoomAppRepository(
         db.userProfileDao(),
         db.quizResultDao(),
         db.badgeDao()
     )
 
-    // Expõe o perfil reativamente para a tela (UI)
-    val perfil: StateFlow<UserProfileEntity?> = repository.observarPerfil()
+    val perfil: StateFlow<UserProfile?> = repository.observarPerfil()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
