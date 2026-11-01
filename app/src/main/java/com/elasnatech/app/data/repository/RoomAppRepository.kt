@@ -28,8 +28,17 @@ class RoomAppRepository(
 
     override fun obterSeloConquistado(pontuacao: Int, totalPerguntas: Int): String = badgeFor(pontuacao, totalPerguntas)
 
+    // --- Mapeamentos para os Modelos de Domínio ---
     private fun UserProfileEntity.toDomainModel() = UserProfile(
         id = id, name = name, avatarId = avatarId, xp = xp, streak = streak, lastActiveDate = lastActiveDate
+    )
+
+    private fun QuizResultEntity.toDomainModel() = QuizResult(
+        id = id, quizId = quizId, score = score, total = total, xpGained = xpGained, date = date
+    )
+
+    private fun EarnedBadgeEntity.toDomainModel() = EarnedBadge(
+        badgeId = badgeId, earnedDate = earnedDate
     )
 
     override fun observarPerfil(): Flow<UserProfile?> {
@@ -53,16 +62,21 @@ class RoomAppRepository(
         userProfileDao.save(novoPerfil)
     }
 
-    override suspend fun obterMelhorResultadoQuiz(quizId: Int): QuizResultEntity? {
-        return quizResultDao.bestForQuiz(quizId)
+    override suspend fun obterMelhorResultadoQuiz(quizId: Int): QuizResult? {
+        return quizResultDao.bestForQuiz(quizId)?.toDomainModel()
     }
 
     override suspend fun salvarResultadoQuiz(quizId: Int, acertos: Int, totalPerguntas: Int, dataHoje: String): ResultadoQuizModel {
+        // Validação exigida pelo Dev 1 (Ponto 5)
+        require(totalPerguntas > 0 && acertos in 0..totalPerguntas) { "Valores de quiz inválidos" }
+
         val xpGanho = calcularXpGanho(acertos)
         val perfilAntigo = obterPerfil()
         val nivelAntigo = calcularNivel(perfilAntigo.xp)
 
-        val resultado = QuizResultEntity(quizId = quizId, score = acertos, total = totalPerguntas, xpGained = xpGanho, date = dataHoje)
+        val resultado = QuizResultEntity(
+            quizId = quizId, score = acertos, total = totalPerguntas, xpGained = xpGanho, date = dataHoje
+        )
         quizResultDao.insert(resultado)
         userProfileDao.addXp(xpGanho)
         atualizarStreak(dataHoje)
@@ -130,8 +144,14 @@ class RoomAppRepository(
         userProfileDao.updateStreak(novoStreak, dataHoje)
     }
 
-    override fun observarHistoricoQuizzes(): Flow<List<QuizResultEntity>> = quizResultDao.observeAll()
-    override fun observarEmblemas(): Flow<List<EarnedBadgeEntity>> = badgeDao.observeAll()
+    override fun observarHistoricoQuizzes(): Flow<List<QuizResult>> {
+        return quizResultDao.observeAll().map { list -> list.map { it.toDomainModel() } }
+    }
+
+    override fun observarEmblemas(): Flow<List<EarnedBadge>> {
+        return badgeDao.observeAll().map { list -> list.map { it.toDomainModel() } }
+    }
+
     override fun obterPerguntasQuiz(): List<QuizQuestion> = MockData.quiz
     override fun obterCientistas(): List<Scientist> = MockData.scientists
 }

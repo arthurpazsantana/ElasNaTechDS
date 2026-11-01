@@ -9,20 +9,22 @@ import com.elasnatech.app.data.repository.RoomAppRepository
 import com.elasnatech.app.data.repository.ResultadoQuizModel
 import com.elasnatech.app.QuizQuestion
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class QuizViewModel(application: Application) : AndroidViewModel(application) {
+class QuizViewModel(application: Application, private val repository: AppRepository) : AndroidViewModel(application) {
 
-    private val db = AppDatabase.getInstance(application)
-    private val repository: AppRepository = RoomAppRepository(
-        db.userProfileDao(),
-        db.quizResultDao(),
-        db.badgeDao()
+    // Construtor secundário padrão
+    constructor(application: Application) : this(
+        application,
+        RoomAppRepository(
+            AppDatabase.getInstance(application).userProfileDao(),
+            AppDatabase.getInstance(application).quizResultDao(),
+            AppDatabase.getInstance(application).badgeDao()
+        )
     )
 
     val historicoQuizzes = repository.observarHistoricoQuizzes()

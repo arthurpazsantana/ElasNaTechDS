@@ -12,13 +12,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class ProfileViewModel(application: Application) : AndroidViewModel(application) {
+class ProfileViewModel(application: Application, private val repository: AppRepository) : AndroidViewModel(application) {
 
-    private val db = AppDatabase.getInstance(application)
-    private val repository: AppRepository = RoomAppRepository(
-        db.userProfileDao(),
-        db.quizResultDao(),
-        db.badgeDao()
+    // Construtor secundário padrão para o Android Studio / Room normal
+    constructor(application: Application) : this(
+        application,
+        RoomAppRepository(
+            AppDatabase.getInstance(application).userProfileDao(),
+            AppDatabase.getInstance(application).quizResultDao(),
+            AppDatabase.getInstance(application).badgeDao()
+        )
     )
 
     val perfil: StateFlow<UserProfile?> = repository.observarPerfil()
